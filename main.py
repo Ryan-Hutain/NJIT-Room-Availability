@@ -32,7 +32,7 @@ def weekly_schedule(building: str, room: str):
         raise HTTPException(status_code=400, detail=str(e))
     
 @app.get("/rooms/weekly_grid")
-def weekly_schedule(building: str, room: str):
+def weekly_grid(building: str, room: str):
     try:
         return engine.get_weekly_grid(building, room)
     except Exception as e:
