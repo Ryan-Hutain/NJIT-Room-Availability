@@ -15,8 +15,10 @@ This project is still in its sleep-deprived infancy, but after a few hours I hav
   - Track the current availability status of all rooms on a given floor (get_floor_availability)
     - Not terribly useful currently, but aims to be a key component in later functionality
   - Make a list of all rooms in a given building which will be vacant during a specified time interval (get_free_rooms)
+- main: Where the magic happens. Draws in the functionality from everywhere else and allows the user to interface with it. Currently only being used to test functionality.
 
 ## Future Plans
 In the future, I hope to make this a more useful tool complete with a GUI. Ideally, you could navigate from a campus map to a building to a floor, and be able to track real-time occupancy of rooms as well as view structured schedules of specific rooms you may select to track their activity through the week. Class data would also be attached to these schedules, to see which classes exactly may be involved. In a way, this is simply a way to consolidate and visualize the NJIT course catalog in a way more useful to students.
 
 Who knows though. Maybe I've just been up for 36 hours straight and now it's 1am and when I wake up I'll lose motivation for this. But here's hoping.
+
