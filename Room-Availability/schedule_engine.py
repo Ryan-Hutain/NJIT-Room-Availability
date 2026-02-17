@@ -14,7 +14,7 @@ class ScheduleEngine:
                 return int(room[0])
             return 1
         
-        self.df['Floor'] = self.df['Room'].apply(extract_floor)
+        self.df.insert(11, 'Floor', self.df['Room'].apply(extract_floor))
     
     # Given a query time in a specific room, check if there is a class in that room during that time
     def get_room_status(self, building, room, day, time_str):

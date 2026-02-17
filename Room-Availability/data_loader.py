@@ -44,6 +44,10 @@ def data_loader():
     # Delete old columns
     catalog = catalog.drop(columns=['Times', 'Days', 'Location'])
 
+    # Rearranging column order to a way I like better
+    catalog = catalog[['Course', 'Section', 'Title', 'Day', 'Start', 'End', 'Instructor', 'CRN', 'Building', 'Room',
+                       'Delivery Mode', 'Credits', 'Comments']]
+
     catalog = catalog.reset_index()
 
     return catalog
