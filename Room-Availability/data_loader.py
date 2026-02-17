@@ -1,0 +1,49 @@
+import os, glob, pandas as pd
+
+def data_loader():
+    # Define dataframe
+    catalog = pd.concat(map(pd.read_csv, glob.glob(os.path.join('Room-Availability\Spring 2026 Catalog', '*.csv'))))
+    catalog = catalog.dropna(subset=['Days', 'Times', 'Location']) # Only classes that meet at a defined room at defined times are to be included
+    catalog = catalog.drop(columns=['Term', 'Info', 'Max', 'Now', 'Status']) # Discarding unneeded columns
+
+    # Day processing: make each meeting its own row
+    day_map = {
+        'M': 'Mon',
+        'T': 'Tue',
+        'W': 'Wed',
+        'R': 'Thu',
+        'F': 'Fri',
+        'S': 'Sat'
+    }
+
+    def expand_days(row):
+        days = list(row['Days'])
+        rows = []
+        for d in days:
+            new_row = row.copy()
+            new_row['Day'] = day_map[d]
+            rows.append(new_row)
+        return rows
+
+    expanded_rows = []
+
+    for _, row in catalog.iterrows():
+        expanded_rows.extend(expand_days(row))
+    catalog = pd.DataFrame(expanded_rows)
+
+    # Convert times into separate start and end
+    catalog[['Start', 'End']] = catalog['Times'].str.split(' - ', expand=True)
+
+    catalog['Start'] = pd.to_datetime(catalog['Start'], format='%I:%M %p').dt.time
+    catalog['End'] = pd.to_datetime(catalog['End'], format='%I:%M %p').dt.time
+
+    # Separate room numbers into building + room
+    catalog[['Building', 'Room']] = catalog['Location'].str.split(' ', n=1, expand=True)
+    #print(catalog[catalog['Location'].str.count(' ') != 1]['Location'].unique()) # Lecture halls have a space in room number
+
+    # Delete old columns
+    catalog = catalog.drop(columns=['Times', 'Days', 'Location'])
+
+    catalog = catalog.reset_index()
+
+    return catalog
