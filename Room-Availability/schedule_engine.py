@@ -56,6 +56,32 @@ class ScheduleEngine:
             (self.df['Room'] == room)
         ].sort_values(['Day', 'Start'])
     
+    # Similar to schedule, but more API-friendly
+    def get_weekly_grid(self, building, room):
+        df_room = self.df[
+            (self.df["Building"] == building) &
+            (self.df["Room"] == room)
+        ].copy()
+
+        week_order = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+        self.df['Day'] = pd.Categorical(self.df['Day'], categories=week_order, ordered=True)
+
+        df_room = df_room.sort_values(["Day", "Start"])
+
+        # Build structured dictionary
+        schedule = {day: [] for day in week_order}
+
+        for _, row in df_room.iterrows():
+            schedule[row["Day"]].append({
+                "start": row["Start"].strftime("%H:%M"),
+                "end": row["End"].strftime("%H:%M"),
+                "course": row.get("Course", None),
+                "dept": row.get("Dept", None)
+            })
+
+        return schedule
+
+    
     # Get availability of all rooms on a given floor at a given time
     def get_floor_availability(self, building, floor, day, time_str):
         query_time = pd.to_datetime(time_str, format='%H:%M').time()
@@ -110,3 +136,61 @@ class ScheduleEngine:
                 free_rooms.append(room)
 
         return sorted(free_rooms)
+
+
+    # Analytics
+
+    # Get proportion of rooms occupied in each building at any given time
+    def get_building_occupancy(self, day, time_str):
+        query_time = pd.to_datetime(time_str, format="%H:%M").time()
+
+        results = {}
+
+        for building in self.df["Building"].unique():
+
+            building_df = self.df[self.df["Building"] == building]
+
+            total_rooms = building_df["Room"].nunique()
+
+            occupied_rooms = building_df[
+                (building_df["Day"] == day) &
+                (building_df["Start"] <= query_time) &
+                (building_df["End"] > query_time)
+            ]["Room"].nunique()
+
+            proportion = occupied_rooms / total_rooms if total_rooms > 0 else 0
+
+            results[building] = {
+                "occupied_rooms": occupied_rooms,
+                "total_rooms": total_rooms,
+                "proportion_occupied": round(proportion, 3)
+            }
+
+        return results
+
+    def get_building_headcount(self, day, time_str):
+        query_time = pd.to_datetime(time_str, format="%H:%M").time()
+
+        active = self.df[
+            (self.df["Day"] == day) &
+            (self.df["Start"] <= query_time) &
+            (self.df["End"] > query_time)
+        ]
+
+        # Aggregate per room-time
+        active_grouped = (
+            active
+            .groupby(["Building", "Room", "Day", "Start", "End"], as_index=False)
+            ["Enrolled"]
+            .sum()
+        )
+
+        headcount = (
+            active_grouped
+            .groupby("Building")["Enrolled"]
+            .sum()
+            .sort_values(ascending=False)
+            .to_dict()
+        )
+
+        return headcount
