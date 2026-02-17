@@ -1,7 +1,7 @@
 ﻿# NJIT-Room-Availability
 
 ## Overview
-Pulling an all-nighter and then reaching an absolutely inspired idea is a very dangerous combination. Someone in class thsi morning threw out the idea of having something to track the availability of open classrooms to use as study spots, and the idea stuck in my head.
+Pulling an all-nighter and then reaching an absolutely inspired idea is a very dangerous combination. Someone in class this morning threw out the idea of having something to track the availability of open classrooms to use as study spots, and the idea stuck in my head.
 
 This analysis is largely based on the NJIT course catalog to track rooms and class availability. CSVs of the catalog for the current term (Spring 2026) are stored as raw data in the folder sharing that name.
 
@@ -21,3 +21,4 @@ This project is still in its sleep-deprived infancy, but after a few hours I hav
 In the future, I hope to make this a more useful tool complete with a GUI, help it become its own little niche applet in time. Ideally, you could navigate from a campus map to a building to a floor, and be able to track real-time occupancy of rooms as well as view structured schedules of specific rooms you may select to track their activity through the week. Class data would also be attached to these schedules, to see which classes exactly may be involved. In a way, this is simply a way to consolidate and visualize the NJIT course catalog in a way more useful to students.
 
 Who knows though. Maybe I've just been up for 36 hours straight and now it's 2 am and when I wake up I'll lose motivation for this. But here's hoping.
+
