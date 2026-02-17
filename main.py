@@ -1,53 +1,79 @@
-# Load functionality from other files in project
-from data_loader import data_loader
+from fastapi import FastAPI, HTTPException
+from data_loader import load_and_clean_data
 from schedule_engine import ScheduleEngine
 
-catalog = data_loader()
-engine = ScheduleEngine(catalog)
+app = FastAPI(title="Campus Room Availability API")
+
+# Load data once at startup
+df = load_and_clean_data()
+engine = ScheduleEngine(df)
 
 
-# Quick functionality tests
-
-# Moment query
-building = "COLT"
-room = "416"
-day = "Wed"
-time = "11:00"
-
-status = engine.get_room_status(building, room, day, time)
-print(f"Room {building}{room} availability at {time} on {day}: {status}")
-print('\n')
+# --- Basic health check ---
+@app.get("/")
+def root():
+    return {"status": "API running"}
 
 
-# Floor-based query
-floor = 4
-floor_status = engine.get_floor_availability(building, floor, day, time)
-print(f"{building} floor {floor} availability at {time} on {day}:")
-for r, available in floor_status.items():
-    print(f"  {r}: {'Free' if available else 'Occupied'}")
-print('\n')
+# --- Room-level queries ---
+@app.get("/rooms/status")
+def room_status(building: str, room: str, day: str, time: str):
+    try:
+        return engine.get_room_status(building, room, day, time)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
-# Check if room is free during interval
-start_time = "13:00"
-end_time = "14:00"
+@app.get("/rooms/weekly")
+def weekly_schedule(building: str, room: str):
+    try:
+        return engine.get_weekly_grid(building, room)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-free_rooms = engine.get_free_rooms(building, day, start_time, end_time)
-print(f"Rooms free in {building} on {day} from {start_time}-{end_time}: {free_rooms}")
-print('\n')
+
+# --- Floor-level availability ---
+@app.get("/floors/status")
+def floor_status(building: str, floor: int, day: str, time: str):
+    try:
+        return engine.get_floor_availability(building, floor, day, time)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
-# Make weekly overview of given room
-weekly_schedule = engine.get_weekly_schedule(building, room)
-print(f"Weekly schedule for room {building}{room}:")
-print(weekly_schedule)
-print('\n')
+# --- Building analytics ---
+@app.get("/analytics/building_occupancy")
+def building_occupancy(day: str, time: str):
+    try:
+        return engine.get_building_occupancy(day, time)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-weekly_grid = engine.get_weekly_grid(building, room)
-print(f"Weekly schedule for room {building}{room}:")
-print(weekly_grid)
-print('\n')
 
-# Get building occupancy at time
-print(engine.get_building_occupancy(day, time))
-print(engine.get_building_headcount(day, time))
+@app.get("/analytics/building_headcount")
+def building_headcount(day: str, time: str):
+    try:
+        return engine.get_building_headcount(day, time)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# --- Campus discovery endpoints ---
+@app.get("/buildings")
+def get_buildings():
+    return sorted(engine.df["Building"].unique())
+
+
+@app.get("/buildings/{building}/floors")
+def get_floors(building: str):
+    floors = engine.df[engine.df["Building"] == building]["Floor"].unique()
+    return sorted(floors)
+
+
+@app.get("/buildings/{building}/floors/{floor}/rooms")
+def get_rooms(building: str, floor: int):
+    rooms = engine.df[
+        (engine.df["Building"] == building) &
+        (engine.df["Floor"] == floor)
+    ]["RoomNumber"].unique()
+    return sorted(rooms)

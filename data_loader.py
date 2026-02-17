@@ -1,6 +1,6 @@
 import os, glob, pandas as pd
 
-def data_loader():
+def load_and_clean_data():
     # Define dataframe
     catalog = pd.concat(map(pd.read_csv, glob.glob(os.path.join('Room-Availability\data\Spring 2026 Catalog', '*.csv'))))
     catalog = catalog.dropna(subset=['Days', 'Times', 'Location']) # Only classes that meet at a defined room at defined times are to be included
