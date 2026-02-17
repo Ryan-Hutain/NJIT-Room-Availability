@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from data_loader import load_and_clean_data
 from schedule_engine import ScheduleEngine
 
-app = FastAPI(title="Campus Room Availability API")
+app = FastAPI(title="NJIT Campus Room Availability API")
 
 # Load data once at startup
 df = load_and_clean_data()
@@ -24,7 +24,14 @@ def room_status(building: str, room: str, day: str, time: str):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.get("/rooms/weekly")
+@app.get("/rooms/weekly_schedule")
+def weekly_schedule(building: str, room: str):
+    try:
+        return engine.get_weekly_schedule(building, room)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+@app.get("/rooms/weekly_grid")
 def weekly_schedule(building: str, room: str):
     try:
         return engine.get_weekly_grid(building, room)
