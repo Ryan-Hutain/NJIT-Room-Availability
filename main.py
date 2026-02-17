@@ -84,3 +84,6 @@ def get_rooms(building: str, floor: int):
         (engine.df["Floor"] == floor)
     ]["RoomNumber"].unique()
     return sorted(rooms)
+
+import os
+print("CWD: ", os.getcwd())
