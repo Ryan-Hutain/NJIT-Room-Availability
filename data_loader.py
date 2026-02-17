@@ -1,54 +1,48 @@
-import os, glob, pandas as pd
+from pathlib import Path
+import pandas as pd
+import glob
 
 def load_and_clean_data():
-    # Define dataframe
-    catalog = pd.concat(map(pd.read_csv, glob.glob(os.path.join('Room-Availability\data\Spring 2026 Catalog', '*.csv'))))
-    catalog = catalog.dropna(subset=['Days', 'Times', 'Location']) # Only classes that meet at a defined room at defined times are to be included
-    catalog = catalog.drop(columns=['Term', 'Info', 'Max', 'Status']) # Discarding unneeded columns
+    # Folder containing data, relative to this file
+    data_dir = Path(__file__).parent / "data" / "Spring 2026 Catalog"
+    
+    # List CSV files
+    all_files = list(data_dir.glob("*.csv"))
+    if not all_files:
+        raise FileNotFoundError(f"No CSV files found in {data_dir.resolve()}")
+
+    # Concatenate
+    catalog = pd.concat(map(pd.read_csv, all_files), ignore_index=True)
+
+    # Drop classes with no location or days
+    catalog = catalog.dropna(subset=['Days', 'Times', 'Location'])
+    catalog = catalog.drop(columns=['Term', 'Info', 'Max', 'Status'])
     catalog = catalog.rename(columns={'Now': 'Enrolled'})
 
-    # Day processing: make each meeting its own row
-    day_map = {
-        'M': 'Mon',
-        'T': 'Tue',
-        'W': 'Wed',
-        'R': 'Thu',
-        'F': 'Fri',
-        'S': 'Sat'
-    }
-
-    def expand_days(row):
-        days = list(row['Days'])
-        rows = []
-        for d in days:
-            new_row = row.copy()
-            new_row['Day'] = day_map[d]
-            rows.append(new_row)
-        return rows
-
+    # Expand days
+    day_map = {'M':'Mon','T':'Tue','W':'Wed','R':'Thu','F':'Fri','S':'Sat'}
     expanded_rows = []
 
     for _, row in catalog.iterrows():
-        expanded_rows.extend(expand_days(row))
+        for d in list(row['Days']):
+            new_row = row.copy()
+            new_row['Day'] = day_map[d]
+            expanded_rows.append(new_row)
+
     catalog = pd.DataFrame(expanded_rows)
 
-    # Convert times into separate start and end
-    catalog[['Start', 'End']] = catalog['Times'].str.split(' - ', expand=True)
-
+    # Split times
+    catalog[['Start','End']] = catalog['Times'].str.split(' - ', expand=True)
     catalog['Start'] = pd.to_datetime(catalog['Start'], format='%I:%M %p').dt.time
     catalog['End'] = pd.to_datetime(catalog['End'], format='%I:%M %p').dt.time
 
-    # Separate room numbers into building + room
-    catalog[['Building', 'Room']] = catalog['Location'].str.split(' ', n=1, expand=True)
-    #print(catalog[catalog['Location'].str.count(' ') != 1]['Location'].unique()) # Lecture halls have a space in room number
+    # Split location
+    catalog[['Building','Room']] = catalog['Location'].str.split(' ', n=1, expand=True)
+    catalog = catalog.drop(columns=['Times','Days','Location'])
 
-    # Delete old columns
-    catalog = catalog.drop(columns=['Times', 'Days', 'Location'])
+    # Rearrange columns
+    catalog = catalog[['Course', 'Section', 'Title', 'Day', 'Start', 'End', 'Instructor', 'CRN',
+                       'Building', 'Room', 'Credits', 'Delivery Mode', 'Enrolled', 'Comments']]
 
-    # Rearranging column order to a way I like better
-    catalog = catalog[['Course', 'Section', 'Title', 'Day', 'Start', 'End', 'Instructor', 'CRN', 'Building', 'Room',
-                        'Credits', 'Delivery Mode', 'Enrolled', 'Comments']]
-
-    catalog = catalog.reset_index()
-
+    catalog = catalog.reset_index(drop=True)
     return catalog
