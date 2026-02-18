@@ -78,8 +78,8 @@ class ScheduleEngine:
             sections = "/".join(str(s) for s in group["Section"].tolist())
 
             schedule[day].append({
-                "start": start.strftime("%H:%M"),
-                "end": end.strftime("%H:%M"),
+                "start": start,
+                "end": end,
                 "course": group["Course"].iloc[0],
                 "section": sections,
                 "title": group["Title"].iloc[0],
