@@ -54,7 +54,8 @@ class ScheduleEngine:
         return self.df[
             (self.df['Building'] == building) &
             (self.df['Room'] == room)
-        ].sort_values(['Day', 'Start'])
+        ].sort_values(['Day', 'Start']).to_dict(orient="records")
+
     
     # Similar to schedule, but more API-friendly
     def get_weekly_grid(self, building, room):
@@ -64,22 +65,29 @@ class ScheduleEngine:
         ].copy()
 
         week_order = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-        self.df['Day'] = pd.Categorical(self.df['Day'], categories=week_order, ordered=True)
+        df_room['Day'] = pd.Categorical(df_room['Day'], categories=week_order, ordered=True)
 
         df_room = df_room.sort_values(["Day", "Start"])
 
-        # Build structured dictionary
         schedule = {day: [] for day in week_order}
 
-        for _, row in df_room.iterrows():
-            schedule[row["Day"]].append({
-                "start": row["Start"].strftime("%H:%M"),
-                "end": row["End"].strftime("%H:%M"),
-                "course": row.get("Course", None),
-                "dept": row.get("Dept", None)
+        # Group by matching time blocks
+        grouped = df_room.groupby(["Day", "Start", "End"])
+
+        for (day, start, end), group in grouped:
+            sections = "/".join(str(s) for s in group["Section"].tolist())
+
+            schedule[day].append({
+                "start": start.strftime("%H:%M"),
+                "end": end.strftime("%H:%M"),
+                "course": group["Course"].iloc[0],
+                "section": sections,
+                "title": group["Title"].iloc[0],
+                "instructor": group["Instructor"].iloc[0]
             })
 
         return schedule
+
 
     
     # Get availability of all rooms on a given floor at a given time

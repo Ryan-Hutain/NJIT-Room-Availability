@@ -16,7 +16,7 @@ def load_and_clean_data():
 
     # Drop classes with no location or days
     catalog = catalog.dropna(subset=['Days', 'Times', 'Location'])
-    catalog = catalog.drop(columns=['Term', 'Info', 'Max', 'Status'])
+    catalog = catalog.drop(columns=['Term', 'Info', 'Max', 'Status', 'Comments'])
     catalog = catalog.rename(columns={'Now': 'Enrolled'})
 
     # Expand days
@@ -42,7 +42,7 @@ def load_and_clean_data():
 
     # Rearrange columns
     catalog = catalog[['Course', 'Section', 'Title', 'Day', 'Start', 'End', 'Instructor', 'CRN',
-                       'Building', 'Room', 'Credits', 'Delivery Mode', 'Enrolled', 'Comments']]
+                       'Building', 'Room', 'Credits', 'Delivery Mode', 'Enrolled']]
 
     catalog = catalog.reset_index(drop=True)
     return catalog

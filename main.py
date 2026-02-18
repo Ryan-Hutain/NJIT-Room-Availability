@@ -27,7 +27,8 @@ def room_status(building: str, room: str, day: str, time: str):
 @app.get("/rooms/weekly_schedule")
 def weekly_schedule(building: str, room: str):
     try:
-        return engine.get_weekly_schedule(building, room)
+        schedule = engine.get_weekly_schedule(building, room)
+        return schedule
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     
