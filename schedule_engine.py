@@ -10,8 +10,11 @@ class ScheduleEngine:
     def _add_floor_column(self):
         def extract_floor(room):
             # If the room name is a non-empty string and starts with a digit, that is the floor number; otherwise, default to 1
-            if isinstance(room, str) and room and room[0].isdigit():
-                return int(room[0])
+            if isinstance(room, str) and room:
+                if room[0].isdigit():
+                    return int(room[0])
+                elif room[0] == 'G':
+                    return 0
             return 1
         
         self.df.insert(10, 'Floor', self.df['Room'].apply(extract_floor))
@@ -175,30 +178,3 @@ class ScheduleEngine:
             }
 
         return results
-
-    def get_building_headcount(self, day, time_str):
-        query_time = pd.to_datetime(time_str, format="%H:%M").time()
-
-        active = self.df[
-            (self.df["Day"] == day) &
-            (self.df["Start"] <= query_time) &
-            (self.df["End"] > query_time)
-        ]
-
-        # Aggregate per room-time
-        active_grouped = (
-            active
-            .groupby(["Building", "Room", "Day", "Start", "End"], as_index=False)
-            ["Enrolled"]
-            .sum()
-        )
-
-        headcount = (
-            active_grouped
-            .groupby("Building")["Enrolled"]
-            .sum()
-            .sort_values(ascending=False)
-            .to_dict()
-        )
-
-        return headcount

@@ -58,14 +58,6 @@ def building_occupancy(day: str, time: str):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.get("/analytics/building_headcount")
-def building_headcount(day: str, time: str):
-    try:
-        return engine.get_building_headcount(day, time)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
 # --- Campus discovery endpoints ---
 @app.get("/buildings")
 def get_buildings():
